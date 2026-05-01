@@ -1,25 +1,24 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
-// ─────────────────────────────────────────────
-// DATA
-// ─────────────────────────────────────────────
+// ─── DATA ────────────────────────────────────────────────────────────────────
 
 const NAV_LINKS = ['About', 'Skills', 'Experience', 'Certifications', 'Contact']
+
+const TERMINAL_CMDS = [
+  { cmd: 'Connect-MgGraph -Scopes "User.Read.All"', out: '[✓] Connected to Microsoft Graph API', ok: true },
+  { cmd: 'Get-MgUser -All | Measure-Object', out: '  Count : 100  ·  Licensed : 94  ·  Active : 91', ok: false },
+  { cmd: 'az ad conditional-access policy list', out: '[✓] 12 policies active  ·  0 violations', ok: true },
+  { cmd: 'Get-AzVM -Status | Select Name,PowerState', out: '  All instances running  ·  SLA 99.9%', ok: false },
+]
 
 const SKILLS = [
   {
     category: 'Cloud & Identity',
-    items: [
-      'Microsoft Entra ID', 'Azure AD', 'M365 Admin Center',
-      'Intune', 'Autopilot', 'Conditional Access', 'MFA', 'SSO',
-    ],
+    items: ['Microsoft Entra ID', 'Azure AD', 'M365 Admin Center', 'Intune', 'Autopilot', 'Conditional Access', 'MFA', 'SSO'],
   },
   {
-    category: 'Directory & Support',
-    items: [
-      'Active Directory', 'Group Policy', 'RBAC',
-      'PowerShell', 'User Lifecycle Management', 'License Management',
-    ],
+    category: 'Directory & Access',
+    items: ['Active Directory', 'Group Policy', 'RBAC', 'PowerShell', 'User Lifecycle', 'License Management'],
   },
   {
     category: 'ITSM & Ticketing',
@@ -27,10 +26,7 @@ const SKILLS = [
   },
   {
     category: 'Security & Auth',
-    items: [
-      'FortiClient VPN', 'Cisco AnyConnect', 'Imprivata SSO',
-      'Entrust Identity', 'FortiToken', 'Microsoft Authenticator',
-    ],
+    items: ['FortiClient VPN', 'Cisco AnyConnect', 'Imprivata SSO', 'Entrust Identity', 'FortiToken', 'Microsoft Authenticator'],
   },
   {
     category: 'Infrastructure',
@@ -46,7 +42,7 @@ const EXPERIENCE = [
     period: 'Jan 2025 – Present',
     current: true,
     bullets: [
-      'Administer Microsoft 365 environment for 100+ users including Entra ID, Exchange Online, Teams, and SharePoint provisioning.',
+      'Administer Microsoft 365 environment for 100+ users including Entra ID, Exchange Online, Teams, and SharePoint.',
       'Manage full user lifecycle — onboarding, role changes, and offboarding — across Azure AD and on-prem Active Directory.',
       'Configure and maintain Conditional Access policies and MFA enforcement, reducing authentication-related incidents.',
       'Resolve IT support tickets via ServiceNow and Jira, consistently meeting SLA targets with full audit documentation.',
@@ -119,59 +115,33 @@ const EXPERIENCE = [
 ]
 
 const CERTIFICATIONS = [
-  {
-    name: 'Microsoft Azure Administrator Associate',
-    code: 'AZ-104',
-    issuer: 'Microsoft',
-    borderClass: 'border-blue-500',
-    codeClass: 'text-blue-600',
-    bgClass: 'bg-blue-50',
-  },
-  {
-    name: 'Microsoft Certified Professional',
-    code: 'MCP',
-    issuer: 'Microsoft',
-    borderClass: 'border-blue-400',
-    codeClass: 'text-blue-500',
-    bgClass: 'bg-blue-50',
-  },
-  {
-    name: 'LPIC-1 Linux Administrator',
-    code: 'LPIC-1',
-    issuer: 'Linux Professional Institute',
-    borderClass: 'border-orange-500',
-    codeClass: 'text-orange-600',
-    bgClass: 'bg-orange-50',
-  },
-  {
-    name: 'LPIC-2 Linux Administrator',
-    code: 'LPIC-2',
-    issuer: 'Linux Professional Institute',
-    borderClass: 'border-orange-600',
-    codeClass: 'text-orange-700',
-    bgClass: 'bg-orange-50',
-  },
-  {
-    name: 'VMware Data Center Virtualization Associate',
-    code: 'VCP-DCV',
-    issuer: 'VMware',
-    borderClass: 'border-slate-500',
-    codeClass: 'text-slate-600',
-    bgClass: 'bg-slate-50',
-  },
-  {
-    name: 'Citrix Certified Associate',
-    code: 'CCA',
-    issuer: 'Citrix',
-    borderClass: 'border-teal-500',
-    codeClass: 'text-teal-600',
-    bgClass: 'bg-teal-50',
-  },
+  { name: 'Microsoft Azure Administrator Associate', code: 'AZ-104', issuer: 'Microsoft', accent: '#3b82f6' },
+  { name: 'Microsoft Certified Professional', code: 'MCP', issuer: 'Microsoft', accent: '#60a5fa' },
+  { name: 'LPIC-1 Linux Administrator', code: 'LPIC-1', issuer: 'Linux Professional Institute', accent: '#f97316' },
+  { name: 'LPIC-2 Linux Administrator', code: 'LPIC-2', issuer: 'Linux Professional Institute', accent: '#ea580c' },
+  { name: 'VMware Data Center Virtualization', code: 'VCP-DCV', issuer: 'VMware', accent: '#94a3b8' },
+  { name: 'Citrix Certified Associate', code: 'CCA', issuer: 'Citrix', accent: '#14b8a6' },
 ]
 
-// ─────────────────────────────────────────────
-// ICONS
-// ─────────────────────────────────────────────
+// ─── HOOK ────────────────────────────────────────────────────────────────────
+
+function useReveal(threshold = 0.12) {
+  const ref = useRef(null)
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) setVisible(true) },
+      { threshold }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [threshold])
+  return [ref, visible]
+}
+
+// ─── ICONS ───────────────────────────────────────────────────────────────────
 
 function IconEmail() {
   return (
@@ -197,18 +167,17 @@ function IconLinkedIn() {
   )
 }
 
-function IconLocation() {
+function IconDownload() {
   return (
     <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
     </svg>
   )
 }
 
 function IconMenu() {
   return (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
     </svg>
   )
@@ -216,22 +185,109 @@ function IconMenu() {
 
 function IconClose() {
   return (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
     </svg>
   )
 }
 
-// ─────────────────────────────────────────────
-// NAVBAR
-// ─────────────────────────────────────────────
+// ─── SECTION HEADING ─────────────────────────────────────────────────────────
+
+function SectionHeading({ label, title }) {
+  return (
+    <div className="mb-12">
+      <p className="font-mono text-cyan-500 text-xs uppercase tracking-widest mb-2">{label}</p>
+      <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">{title}</h2>
+    </div>
+  )
+}
+
+// ─── TERMINAL ────────────────────────────────────────────────────────────────
+
+function Terminal() {
+  const [idx, setIdx] = useState(0)
+  const [typed, setTyped] = useState('')
+  const [stage, setStage] = useState('typing')
+  const [log, setLog] = useState([])
+
+  useEffect(() => {
+    const current = TERMINAL_CMDS[idx]
+
+    if (stage === 'typing') {
+      if (typed.length === current.cmd.length) {
+        const t = setTimeout(() => setStage('output'), 300)
+        return () => clearTimeout(t)
+      }
+      const delay = typed.length === 0 ? 700 : 32 + Math.random() * 28
+      const t = setTimeout(() => setTyped(current.cmd.slice(0, typed.length + 1)), delay)
+      return () => clearTimeout(t)
+    }
+
+    if (stage === 'output') {
+      const t = setTimeout(() => setStage('waiting'), 2400)
+      return () => clearTimeout(t)
+    }
+
+    if (stage === 'waiting') {
+      const t = setTimeout(() => {
+        setLog(prev => [...prev, TERMINAL_CMDS[idx]].slice(-3))
+        setIdx(i => (i + 1) % TERMINAL_CMDS.length)
+        setTyped('')
+        setStage('typing')
+      }, 400)
+      return () => clearTimeout(t)
+    }
+  }, [stage, typed, idx])
+
+  const current = TERMINAL_CMDS[idx]
+
+  return (
+    <div className="rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-blue-950/50">
+      <div className="flex items-center gap-2 px-4 py-3 bg-[#161b22] border-b border-white/5">
+        <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+        <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
+        <span className="w-3 h-3 rounded-full bg-[#28c840]" />
+        <span className="ml-auto font-mono text-slate-500 text-xs">powershell — Administrator</span>
+      </div>
+      <div className="bg-[#0d1117] p-5 font-mono text-sm min-h-[240px] space-y-3">
+        {log.map((entry, i) => (
+          <div key={i} className="opacity-25 space-y-0.5">
+            <p>
+              <span className="text-blue-400">PS</span>
+              <span className="text-slate-600"> ~</span>
+              <span className="text-slate-500"> › </span>
+              <span className="text-slate-300">{entry.cmd}</span>
+            </p>
+            <p className={`pl-4 ${entry.ok ? 'text-emerald-500' : 'text-cyan-500'}`}>{entry.out}</p>
+          </div>
+        ))}
+        <div className="space-y-0.5">
+          <p>
+            <span className="text-blue-400">PS</span>
+            <span className="text-slate-600"> ~</span>
+            <span className="text-slate-500"> › </span>
+            <span className="text-slate-100">{typed}</span>
+            <span className="text-cyan-400 animate-pulse">▋</span>
+          </p>
+          {stage !== 'typing' && (
+            <p className={`pl-4 ${current.ok ? 'text-emerald-400' : 'text-cyan-400'}`}>
+              {current.out}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── NAVBAR ──────────────────────────────────────────────────────────────────
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 30)
+    const onScroll = () => setScrolled(window.scrollY > 40)
     window.addEventListener('scroll', onScroll)
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
@@ -242,58 +298,56 @@ function Navbar() {
   }
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-shadow duration-200 bg-slate-900 ${
-        scrolled ? 'shadow-xl' : ''
-      }`}
-    >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      scrolled
+        ? 'bg-[#080d1a]/90 backdrop-blur-xl border-b border-white/5 shadow-lg shadow-black/30'
+        : 'bg-transparent'
+    }`}>
+      <div className="max-w-6xl mx-auto px-5 sm:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Brand */}
-          <span className="text-white font-semibold text-base tracking-wide select-none">
-            Mohammad Arif Khan
+          <span className="font-display font-bold text-white text-base tracking-tight">
+            <span className="text-gradient">M.</span> Arif Khan
           </span>
 
-          {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-7">
+          <div className="hidden md:flex items-center gap-8">
             {NAV_LINKS.map((link) => (
               <button
                 key={link}
                 onClick={() => scrollTo(link)}
-                className="text-gray-400 hover:text-white text-sm font-medium transition-colors duration-150"
+                className="relative text-slate-400 hover:text-white text-sm font-medium transition-colors duration-150 group"
               >
                 {link}
+                <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-gradient-to-r from-blue-500 to-cyan-400 group-hover:w-full transition-all duration-200" />
               </button>
             ))}
             <a
               href="/resume.pdf"
               download
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded transition-colors duration-150"
+              className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border border-blue-500/40 text-blue-400 hover:bg-blue-500/10 hover:border-blue-400/60 transition-all duration-150"
             >
+              <IconDownload />
               Resume
             </a>
           </div>
 
-          {/* Mobile hamburger */}
           <button
-            className="md:hidden text-gray-400 hover:text-white transition-colors"
+            className="md:hidden text-slate-400 hover:text-white transition-colors"
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle navigation menu"
+            aria-label="Toggle menu"
           >
             {menuOpen ? <IconClose /> : <IconMenu />}
           </button>
         </div>
       </div>
 
-      {/* Mobile dropdown */}
       {menuOpen && (
-        <div className="md:hidden bg-slate-800 border-t border-slate-700">
-          <div className="px-4 py-4 space-y-1">
+        <div className="md:hidden bg-[#0d1628]/95 backdrop-blur-xl border-t border-white/5">
+          <div className="px-5 py-4 space-y-1">
             {NAV_LINKS.map((link) => (
               <button
                 key={link}
                 onClick={() => scrollTo(link)}
-                className="block w-full text-left text-gray-300 hover:text-white py-2.5 text-sm font-medium border-b border-slate-700 last:border-0"
+                className="block w-full text-left text-slate-300 hover:text-white py-3 text-sm font-medium border-b border-white/5 last:border-0 transition-colors"
               >
                 {link}
               </button>
@@ -301,9 +355,9 @@ function Navbar() {
             <a
               href="/resume.pdf"
               download
-              className="block text-blue-400 hover:text-blue-300 pt-3 text-sm font-medium"
+              className="block text-blue-400 hover:text-blue-300 pt-3 text-sm font-medium transition-colors"
             >
-              Download Resume
+              Download Resume →
             </a>
           </div>
         </div>
@@ -312,180 +366,125 @@ function Navbar() {
   )
 }
 
-// ─────────────────────────────────────────────
-// HERO
-// ─────────────────────────────────────────────
+// ─── HERO ────────────────────────────────────────────────────────────────────
 
 function Hero() {
-  const scrollToContact = () => {
-    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })
-  }
+  const scrollToContact = () => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })
 
   return (
-    <section className="min-h-screen bg-slate-900 flex items-center justify-center px-4 pt-16">
-      <div className="text-center max-w-3xl mx-auto">
-        <p className="text-blue-400 text-sm font-semibold uppercase tracking-widest mb-5">
-          IT Professional · Toronto, ON
-        </p>
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-5 leading-tight tracking-tight">
-          Mohammad Arif Khan
-        </h1>
-        <p className="text-xl sm:text-2xl text-gray-300 font-light mb-5">
-          IT Support Analyst &amp; M365 Administrator
-        </p>
-        <div className="flex items-center justify-center gap-2 text-gray-500 mb-10">
-          <IconLocation />
-          <span className="text-sm">Toronto, ON, Canada</span>
-        </div>
+    <section className="relative min-h-screen flex items-center bg-[#080d1a] dot-grid overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-40 -left-40 w-[700px] h-[700px] rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.13) 0%, transparent 65%)', filter: 'blur(70px)' }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.07) 0%, transparent 65%)', filter: 'blur(80px)' }}
+      />
 
-        {/* CTAs */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <a
-            href="/resume.pdf"
-            download
-            className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3 rounded transition-colors duration-150"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Download Resume
-          </a>
-          <button
-            onClick={scrollToContact}
-            className="inline-flex items-center justify-center border border-gray-600 hover:border-gray-400 text-gray-300 hover:text-white font-medium px-8 py-3 rounded transition-colors duration-150"
-          >
-            Get In Touch
-          </button>
-        </div>
+      <div className="relative max-w-6xl mx-auto px-5 sm:px-8 pt-24 pb-20 w-full">
+        <div className="grid lg:grid-cols-[1fr,460px] gap-16 items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="font-mono text-emerald-400 text-xs tracking-wide">Available for opportunities</span>
+            </div>
 
-        {/* Divider */}
-        <div className="mt-20 flex justify-center">
-          <div className="w-px h-12 bg-slate-700"></div>
+            <p className="font-mono text-cyan-500 text-sm mb-4 tracking-wide">
+              // IT Professional · Toronto, ON
+            </p>
+
+            <h1 className="font-display font-bold text-5xl sm:text-6xl lg:text-[4.25rem] text-white mb-5 leading-[1.08] tracking-tight">
+              Mohammad{' '}
+              <span className="text-gradient">Arif Khan</span>
+            </h1>
+
+            <p className="text-slate-400 text-lg sm:text-xl mb-8 max-w-lg leading-relaxed">
+              IT Support Analyst &amp; M365 Administrator — specializing in Azure AD, Intune, and enterprise identity at scale.
+            </p>
+
+            <div className="flex flex-wrap gap-x-10 gap-y-4 mb-10 py-6 border-t border-b border-white/5">
+              {[
+                { val: '6+', label: 'Years Experience' },
+                { val: '3', label: 'Industry Sectors' },
+                { val: '1K+', label: 'Users Supported' },
+              ].map(({ val, label }) => (
+                <div key={label}>
+                  <p className="font-display text-2xl font-bold text-white">{val}</p>
+                  <p className="font-mono text-slate-500 text-xs mt-0.5 uppercase tracking-wide">{label}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-4">
+              <a
+                href="/resume.pdf"
+                download
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-medium px-6 py-3 rounded-lg transition-all duration-150 shadow-lg shadow-blue-600/20"
+              >
+                <IconDownload />
+                Download Resume
+              </a>
+              <button
+                onClick={scrollToContact}
+                className="inline-flex items-center gap-2 border border-white/15 hover:border-white/30 text-slate-300 hover:text-white font-medium px-6 py-3 rounded-lg transition-all duration-150"
+              >
+                Get In Touch
+              </button>
+            </div>
+          </div>
+
+          <div className="hidden lg:block">
+            <Terminal />
+          </div>
         </div>
       </div>
     </section>
   )
 }
 
-// ─────────────────────────────────────────────
-// ABOUT
-// ─────────────────────────────────────────────
+// ─── ABOUT ───────────────────────────────────────────────────────────────────
 
 function About() {
+  const [ref, visible] = useReveal()
+
   return (
-    <section id="about" className="py-20 bg-white">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-        <h2 className="text-2xl font-bold text-slate-900 mb-3 uppercase tracking-wider">About</h2>
-        <div className="w-10 h-0.5 bg-blue-600 mx-auto mb-8"></div>
-        <p className="text-gray-600 text-lg leading-relaxed">
-          IT professional with <span className="text-slate-900 font-medium">6+ years</span> supporting enterprise environments across
-          healthcare, finance, and education sectors. Microsoft Azure Administrator{' '}
-          <span className="text-slate-900 font-medium">(AZ-104)</span> certified, with deep expertise in Microsoft 365,
-          Azure AD, Active Directory, Intune, and ITSM platforms including ServiceNow and Jira.
-          Proven ability to manage complex identity and access environments, enforce security
-          policies, and deliver reliable, SLA-compliant support in regulated, high-uptime settings.
-        </p>
-      </div>
-    </section>
-  )
-}
+    <section id="about" className="py-24 bg-[#0c1220]">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8">
+        <div
+          ref={ref}
+          className={`grid lg:grid-cols-[1fr,300px] gap-16 items-start reveal ${visible ? 'visible' : ''}`}
+        >
+          <div>
+            <SectionHeading label="// about" title="Who I Am" />
+            <p className="text-slate-400 text-base sm:text-lg leading-relaxed">
+              Microsoft Azure Administrator{' '}
+              <span className="text-white font-medium">(AZ-104)</span> certified IT professional with{' '}
+              <span className="text-white font-medium">6+ years</span> supporting enterprise environments
+              across healthcare, finance, and education. Experienced across the full IT support stack —
+              user administration, M365 and Azure AD management, device provisioning, ITSM operations,
+              and end-user troubleshooting. Proven track record delivering reliable, SLA-compliant support
+              in regulated, high-uptime environments. Comfortable as a generalist IT admin or dedicated
+              cloud/identity support specialist.
+            </p>
+          </div>
 
-// ─────────────────────────────────────────────
-// SKILLS
-// ─────────────────────────────────────────────
-
-function Skills() {
-  return (
-    <section id="skills" className="py-20 bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <h2 className="text-2xl font-bold text-slate-900 text-center mb-3 uppercase tracking-wider">Core Skills</h2>
-        <div className="w-10 h-0.5 bg-blue-600 mx-auto mb-12"></div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {SKILLS.map((group) => (
-            <div
-              key={group.category}
-              className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-sm transition-shadow duration-150"
-            >
-              <h3 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-4">
-                {group.category}
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {group.items.map((skill) => (
-                  <span
-                    key={skill}
-                    className="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-full"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ─────────────────────────────────────────────
-// EXPERIENCE
-// ─────────────────────────────────────────────
-
-function Experience() {
-  return (
-    <section id="experience" className="py-20 bg-white">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <h2 className="text-2xl font-bold text-slate-900 text-center mb-3 uppercase tracking-wider">Experience</h2>
-        <div className="w-10 h-0.5 bg-blue-600 mx-auto mb-12"></div>
-
-        <div className="relative">
-          {/* Vertical timeline line — desktop only */}
-          <div className="hidden md:block absolute left-3.5 top-0 bottom-0 w-px bg-gray-200" aria-hidden="true"></div>
-
-          <div className="space-y-8">
-            {EXPERIENCE.map((role, i) => (
-              <div key={i} className="md:pl-14 relative">
-                {/* Timeline dot */}
-                <div className="hidden md:flex absolute left-0 top-1.5 w-7 h-7 rounded-full border-2 border-blue-600 bg-white items-center justify-center">
-                  {role.current && (
-                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600 block"></span>
-                  )}
-                </div>
-
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                  {/* Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-                    <div>
-                      <h3 className="text-sm font-semibold text-slate-900 leading-snug">{role.title}</h3>
-                      <p className="text-blue-600 text-sm font-medium mt-1">
-                        {role.company}
-                        {role.detail && (
-                          <span className="text-gray-400 font-normal"> &mdash; {role.detail}</span>
-                        )}
-                      </p>
-                    </div>
-                    <span
-                      className={`self-start text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap ${
-                        role.current
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-200 text-gray-500'
-                      }`}
-                    >
-                      {role.period}
-                    </span>
-                  </div>
-
-                  {/* Bullets */}
-                  <ul className="space-y-2">
-                    {role.bullets.map((bullet, j) => (
-                      <li key={j} className="flex gap-2.5 text-sm text-gray-600">
-                        <span className="text-blue-400 mt-1 flex-shrink-0 leading-none">&bull;</span>
-                        <span className="leading-relaxed">{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+          <div className="space-y-3">
+            {[
+              { val: '6+', label: 'Years in Enterprise IT', accent: '#3b82f6' },
+              { val: '3', label: 'Regulated Sectors', accent: '#06b6d4' },
+              { val: '1,000+', label: 'End Users Supported', accent: '#8b5cf6' },
+              { val: 'AZ-104', label: 'Azure Certified', accent: '#f59e0b' },
+            ].map(({ val, label, accent }) => (
+              <div
+                key={label}
+                className="flex items-center gap-4 bg-[#0d1628] border border-white/5 rounded-xl p-4"
+                style={{ borderLeftColor: accent, borderLeftWidth: '3px' }}
+              >
+                <p className="font-display font-bold text-xl text-white w-20 flex-shrink-0">{val}</p>
+                <p className="font-mono text-slate-400 text-xs">{label}</p>
               </div>
             ))}
           </div>
@@ -495,33 +494,42 @@ function Experience() {
   )
 }
 
-// ─────────────────────────────────────────────
-// CERTIFICATIONS
-// ─────────────────────────────────────────────
+// ─── SKILLS ──────────────────────────────────────────────────────────────────
 
-function Certifications() {
+function SkillCard({ group, index }) {
+  const [ref, visible] = useReveal()
   return (
-    <section id="certifications" className="py-20 bg-gray-50">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <h2 className="text-2xl font-bold text-slate-900 text-center mb-3 uppercase tracking-wider">
-          Certifications
-        </h2>
-        <div className="w-10 h-0.5 bg-blue-600 mx-auto mb-12"></div>
+    <div
+      ref={ref}
+      className={`reveal ${visible ? 'visible' : ''} bg-[#0d1628] border border-white/[0.06] rounded-xl p-6 hover:border-blue-500/30 hover:shadow-[0_0_28px_rgba(59,130,246,0.07)] transition-all duration-300 cursor-default`}
+      style={{ transitionDelay: `${index * 70}ms` }}
+    >
+      <p className="font-mono text-cyan-500 text-xs uppercase tracking-widest mb-4">{group.category}</p>
+      <div className="flex flex-wrap gap-2">
+        {group.items.map((skill) => (
+          <span
+            key={skill}
+            className="bg-white/[0.04] border border-white/[0.08] text-slate-300 text-xs font-medium px-2.5 py-1 rounded-md"
+          >
+            {skill}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {CERTIFICATIONS.map((cert) => (
-            <div
-              key={cert.code}
-              className={`bg-white rounded-lg border border-gray-200 border-l-4 ${cert.borderClass} p-5 flex items-start gap-4`}
-            >
-              <div className={`${cert.codeClass} ${cert.bgClass} text-sm font-bold px-2.5 py-1.5 rounded flex-shrink-0`}>
-                {cert.code}
-              </div>
-              <div>
-                <p className="text-slate-800 text-sm font-medium leading-snug">{cert.name}</p>
-                <p className="text-gray-400 text-xs mt-1">{cert.issuer}</p>
-              </div>
-            </div>
+function Skills() {
+  const [ref, visible] = useReveal()
+  return (
+    <section id="skills" className="py-24 bg-[#080d1a]">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8">
+        <div ref={ref} className={`reveal ${visible ? 'visible' : ''}`}>
+          <SectionHeading label="// skills" title="Core Technologies" />
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {SKILLS.map((group, i) => (
+            <SkillCard key={group.category} group={group} index={i} />
           ))}
         </div>
       </div>
@@ -529,76 +537,198 @@ function Certifications() {
   )
 }
 
-// ─────────────────────────────────────────────
-// CONTACT
-// ─────────────────────────────────────────────
+// ─── EXPERIENCE ──────────────────────────────────────────────────────────────
 
-function Contact() {
+function ExperienceCard({ role, index }) {
+  const [ref, visible] = useReveal()
   return (
-    <section id="contact" className="py-20 bg-slate-900">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-        <h2 className="text-2xl font-bold text-white mb-3 uppercase tracking-wider">Get In Touch</h2>
-        <div className="w-10 h-0.5 bg-blue-600 mx-auto mb-6"></div>
-        <p className="text-gray-400 text-base mb-12 max-w-md mx-auto">
-          Open to opportunities in IT support, cloud administration, and M365 management.
-          Feel free to reach out.
-        </p>
+    <div
+      ref={ref}
+      className={`reveal ${visible ? 'visible' : ''} relative pl-8`}
+      style={{ transitionDelay: `${index * 80}ms` }}
+    >
+      <div
+        className={`absolute left-0 top-0 bottom-0 w-px ${
+          role.current
+            ? 'bg-gradient-to-b from-blue-500 via-blue-400 to-cyan-400'
+            : 'bg-white/10'
+        }`}
+      />
+      <div
+        className={`absolute left-[-5px] top-5 w-2.5 h-2.5 rounded-full border-2 bg-[#0c1220] ${
+          role.current ? 'border-cyan-400' : 'border-slate-600'
+        }`}
+      >
+        {role.current && (
+          <span className="absolute inset-[-4px] rounded-full border border-cyan-400/30 animate-ping" />
+        )}
+      </div>
 
-        <div className="flex flex-col items-center gap-5">
-          <a
-            href="mailto:mohammad.arifkhan10@outlook.com"
-            className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors duration-150 group"
+      <div className="bg-[#0d1628] border border-white/[0.06] rounded-xl p-5 sm:p-6 mb-5">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
+          <div>
+            <h3 className="font-display font-semibold text-white text-base leading-snug">{role.title}</h3>
+            <p className="text-sm mt-1.5">
+              <span className="text-gradient font-medium">{role.company}</span>
+              {role.detail && <span className="text-slate-500"> — {role.detail}</span>}
+            </p>
+          </div>
+          <span
+            className={`self-start font-mono text-xs px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0 ${
+              role.current
+                ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                : 'bg-white/[0.04] text-slate-500 border border-white/[0.08]'
+            }`}
           >
-            <span className="text-blue-400 group-hover:text-blue-300">
-              <IconEmail />
-            </span>
-            <span className="text-sm">mohammad.arifkhan10@outlook.com</span>
-          </a>
+            {role.period}
+          </span>
+        </div>
+        <ul className="space-y-2.5">
+          {role.bullets.map((bullet, j) => (
+            <li key={j} className="flex gap-3 text-sm text-slate-400 leading-relaxed">
+              <span className="text-cyan-500 mt-0.5 flex-shrink-0">›</span>
+              <span>{bullet}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
+}
 
-          <a
-            href="tel:4169395525"
-            className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors duration-150 group"
-          >
-            <span className="text-blue-400 group-hover:text-blue-300">
-              <IconPhone />
-            </span>
-            <span className="text-sm">416-939-5525</span>
-          </a>
-
-          <a
-            href="https://linkedin.com/in/mohammad-khan1"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors duration-150 group"
-          >
-            <span className="text-blue-400 group-hover:text-blue-300">
-              <IconLinkedIn />
-            </span>
-            <span className="text-sm">linkedin.com/in/mohammad-khan1</span>
-          </a>
+function Experience() {
+  const [ref, visible] = useReveal()
+  return (
+    <section id="experience" className="py-24 bg-[#0c1220]">
+      <div className="max-w-4xl mx-auto px-5 sm:px-8">
+        <div ref={ref} className={`reveal ${visible ? 'visible' : ''}`}>
+          <SectionHeading label="// experience" title="Work History" />
+        </div>
+        <div>
+          {EXPERIENCE.map((role, i) => (
+            <ExperienceCard key={i} role={role} index={i} />
+          ))}
         </div>
       </div>
     </section>
   )
 }
 
-// ─────────────────────────────────────────────
-// FOOTER
-// ─────────────────────────────────────────────
+// ─── CERTIFICATIONS ──────────────────────────────────────────────────────────
+
+function CertCard({ cert, index }) {
+  const [ref, visible] = useReveal()
+  const [hovered, setHovered] = useState(false)
+  return (
+    <div
+      ref={ref}
+      className={`reveal ${visible ? 'visible' : ''} relative overflow-hidden bg-[#0d1628] border border-white/[0.06] rounded-xl p-6 cursor-default transition-all duration-300`}
+      style={{
+        transitionDelay: `${index * 70}ms`,
+        borderLeftColor: hovered ? cert.accent : 'rgba(255,255,255,0.06)',
+        borderLeftWidth: '3px',
+        boxShadow: hovered ? `0 0 30px ${cert.accent}18` : 'none',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div
+        className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+        style={{
+          opacity: hovered ? 1 : 0,
+          background: `linear-gradient(135deg, transparent 30%, ${cert.accent}0a 70%, transparent)`,
+        }}
+      />
+      <p className="font-mono font-bold text-3xl mb-4" style={{ color: cert.accent }}>
+        {cert.code}
+      </p>
+      <p className="text-white text-sm font-medium leading-snug mb-1.5">{cert.name}</p>
+      <p className="font-mono text-slate-500 text-xs">{cert.issuer}</p>
+    </div>
+  )
+}
+
+function Certifications() {
+  const [ref, visible] = useReveal()
+  return (
+    <section id="certifications" className="py-24 bg-[#080d1a]">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8">
+        <div ref={ref} className={`reveal ${visible ? 'visible' : ''}`}>
+          <SectionHeading label="// certifications" title="Credentials" />
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {CERTIFICATIONS.map((cert, i) => (
+            <CertCard key={cert.code} cert={cert} index={i} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── CONTACT ─────────────────────────────────────────────────────────────────
+
+function Contact() {
+  const [ref, visible] = useReveal()
+  return (
+    <section id="contact" className="py-24 bg-[#0c1220]">
+      <div className="max-w-xl mx-auto px-5 sm:px-8 text-center">
+        <div ref={ref} className={`reveal ${visible ? 'visible' : ''}`}>
+          <p className="font-mono text-cyan-500 text-xs uppercase tracking-widest mb-2">// contact</p>
+          <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-4">Let's Connect</h2>
+          <p className="text-slate-400 text-base mb-12">
+            Open to opportunities in IT support, cloud administration, and M365 management.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {[
+            {
+              icon: <IconEmail />,
+              label: 'mohammad.arifkhan10@outlook.com',
+              href: 'mailto:mohammad.arifkhan10@outlook.com',
+            },
+            {
+              icon: <IconPhone />,
+              label: '416-939-5525',
+              href: 'tel:4169395525',
+            },
+            {
+              icon: <IconLinkedIn />,
+              label: 'linkedin.com/in/mohammad-khan1',
+              href: 'https://linkedin.com/in/mohammad-khan1',
+              external: true,
+            },
+          ].map(({ icon, label, href, external }) => (
+            <a
+              key={label}
+              href={href}
+              {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+              className="group flex items-center gap-4 bg-[#0d1628] border border-white/[0.06] hover:border-blue-500/30 rounded-xl px-6 py-4 transition-all duration-200 hover:shadow-[0_0_24px_rgba(59,130,246,0.08)]"
+            >
+              <span className="text-blue-400 group-hover:text-cyan-400 transition-colors">{icon}</span>
+              <span className="text-slate-300 group-hover:text-white text-sm transition-colors">{label}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── FOOTER ──────────────────────────────────────────────────────────────────
 
 function Footer() {
   return (
-    <footer className="bg-slate-950 py-5 text-center">
-      <p className="text-gray-600 text-xs">
+    <footer className="bg-[#050810] border-t border-white/5 py-6 text-center">
+      <p className="font-mono text-slate-600 text-xs">
         &copy; {new Date().getFullYear()} Mohammad Arif Khan &mdash; Toronto, ON
       </p>
     </footer>
   )
 }
 
-// ─────────────────────────────────────────────
-// APP
-// ─────────────────────────────────────────────
+// ─── APP ─────────────────────────────────────────────────────────────────────
 
 export default function App() {
   return (
