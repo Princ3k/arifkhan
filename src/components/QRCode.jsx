@@ -12,7 +12,7 @@ import { QRCodeSVG } from 'qrcode.react'
  * The component is sized for a business card (3.5" × 2") at 96 dpi.
  */
 export default function QRCodeCard() {
-  const siteUrl = 'https://arifkhan.dev'
+  const siteUrl = 'https://arifkhan-two.vercel.app'
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 print:min-h-0 print:bg-transparent">
