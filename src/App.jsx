@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import emailjs from '@emailjs/browser'
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
@@ -668,48 +669,149 @@ function Certifications() {
 
 // ─── CONTACT ─────────────────────────────────────────────────────────────────
 
+const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID'
+const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID'
+const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY'
+
 function Contact() {
   const [ref, visible] = useReveal()
+  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const [status, setStatus] = useState('idle') // 'idle' | 'loading' | 'success' | 'error'
+
+  const handleChange = (e) =>
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setStatus('loading')
+    try {
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        { from_name: form.name, from_email: form.email, message: form.message },
+        EMAILJS_PUBLIC_KEY
+      )
+      setStatus('success')
+      setForm({ name: '', email: '', message: '' })
+    } catch {
+      setStatus('error')
+    }
+  }
+
+  const inputClass =
+    'w-full bg-[#080d1a] border border-white/[0.08] focus:border-blue-500/60 focus:outline-none rounded-lg px-4 py-3 text-white placeholder-slate-500 text-sm transition-colors duration-150'
+
   return (
     <section id="contact" className="py-24 bg-[#0c1220]">
-      <div className="max-w-xl mx-auto px-5 sm:px-8 text-center">
-        <div ref={ref} className={`reveal ${visible ? 'visible' : ''}`}>
+      <div className="max-w-5xl mx-auto px-5 sm:px-8">
+
+        {/* Header */}
+        <div ref={ref} className={`reveal ${visible ? 'visible' : ''} text-center mb-12`}>
           <p className="font-mono text-cyan-500 text-xs uppercase tracking-widest mb-2">// contact</p>
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-4">Let's Connect</h2>
-          <p className="text-slate-400 text-base mb-12">
+          <p className="text-slate-400 text-base max-w-md mx-auto">
             Open to opportunities in IT support, cloud administration, and M365 management.
           </p>
         </div>
 
-        <div className="space-y-3">
-          {[
-            {
-              icon: <IconEmail />,
-              label: 'mohammad.arifkhan10@outlook.com',
-              href: 'mailto:mohammad.arifkhan10@outlook.com',
-            },
-            {
-              icon: <IconPhone />,
-              label: '416-939-5525',
-              href: 'tel:4169395525',
-            },
-            {
-              icon: <IconLinkedIn />,
-              label: 'linkedin.com/in/mohammad-khan1',
-              href: 'https://linkedin.com/in/mohammad-khan1',
-              external: true,
-            },
-          ].map(({ icon, label, href, external }) => (
-            <a
-              key={label}
-              href={href}
-              {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-              className="group flex items-center gap-4 bg-[#0d1628] border border-white/[0.06] hover:border-blue-500/30 rounded-xl px-6 py-4 transition-all duration-200 hover:shadow-[0_0_24px_rgba(59,130,246,0.08)]"
+        {/* Two-column grid */}
+        <div className="grid lg:grid-cols-2 gap-8 items-start">
+
+          {/* Left — contact links */}
+          <div className="space-y-3">
+            <p className="font-mono text-slate-500 text-xs uppercase tracking-widest mb-5">Direct contact</p>
+            {[
+              {
+                icon: <IconEmail />,
+                label: 'mohammad.arifkhan10@outlook.com',
+                href: 'mailto:mohammad.arifkhan10@outlook.com',
+              },
+              {
+                icon: <IconPhone />,
+                label: '416-939-5525',
+                href: 'tel:4169395525',
+              },
+              {
+                icon: <IconLinkedIn />,
+                label: 'linkedin.com/in/mohammad-khan1',
+                href: 'https://linkedin.com/in/mohammad-khan1',
+                external: true,
+              },
+            ].map(({ icon, label, href, external }) => (
+              <a
+                key={label}
+                href={href}
+                {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                className="group flex items-center gap-4 bg-[#0d1628] border border-white/[0.06] hover:border-blue-500/30 rounded-xl px-6 py-4 transition-all duration-200 hover:shadow-[0_0_24px_rgba(59,130,246,0.08)]"
+              >
+                <span className="text-blue-400 group-hover:text-cyan-400 transition-colors">{icon}</span>
+                <span className="text-slate-300 group-hover:text-white text-sm transition-colors">{label}</span>
+              </a>
+            ))}
+          </div>
+
+          {/* Right — contact form */}
+          <form
+            onSubmit={handleSubmit}
+            className="bg-[#0d1628] border border-white/[0.06] rounded-xl p-6 space-y-4"
+          >
+            <p className="font-mono text-slate-500 text-xs uppercase tracking-widest mb-5">Send a message</p>
+
+            <div>
+              <label className="block font-mono text-slate-400 text-xs mb-1.5">Name</label>
+              <input
+                type="text"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="Your name"
+                required
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <label className="block font-mono text-slate-400 text-xs mb-1.5">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="your@email.com"
+                required
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <label className="block font-mono text-slate-400 text-xs mb-1.5">Message</label>
+              <textarea
+                name="message"
+                value={form.message}
+                onChange={handleChange}
+                placeholder="What's on your mind?"
+                required
+                rows={5}
+                className={`${inputClass} resize-none`}
+              />
+            </div>
+
+            {status === 'success' && (
+              <p className="font-mono text-emerald-400 text-xs">// Message sent — I'll be in touch soon.</p>
+            )}
+            {status === 'error' && (
+              <p className="font-mono text-red-400 text-xs">// Something went wrong. Try again or email directly.</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={status === 'loading'}
+              className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium px-6 py-3 rounded-lg transition-all duration-150 shadow-lg shadow-blue-600/20"
             >
-              <span className="text-blue-400 group-hover:text-cyan-400 transition-colors">{icon}</span>
-              <span className="text-slate-300 group-hover:text-white text-sm transition-colors">{label}</span>
-            </a>
-          ))}
+              {status === 'loading' ? 'Sending…' : 'Send Message'}
+            </button>
+          </form>
+
         </div>
       </div>
     </section>
