@@ -669,13 +669,13 @@ function Certifications() {
 
 // ─── CONTACT ─────────────────────────────────────────────────────────────────
 
-const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID'
-const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID'
-const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY'
+const EMAILJS_SERVICE_ID  = 'service_trswsq8'
+const EMAILJS_TEMPLATE_ID = 'template_ell0j87'
+const EMAILJS_PUBLIC_KEY  = '73d8Jf65XR8LH4oen'
 
 function Contact() {
   const [ref, visible] = useReveal()
-  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const [form, setForm] = useState({ name: '', email: '', company: '', message: '' })
   const [status, setStatus] = useState('idle') // 'idle' | 'loading' | 'success' | 'error'
 
   const handleChange = (e) =>
@@ -688,11 +688,11 @@ function Contact() {
       await emailjs.send(
         EMAILJS_SERVICE_ID,
         EMAILJS_TEMPLATE_ID,
-        { from_name: form.name, from_email: form.email, message: form.message },
+        { from_name: form.name, from_email: form.email, company: form.company, message: form.message },
         EMAILJS_PUBLIC_KEY
       )
       setStatus('success')
-      setForm({ name: '', email: '', message: '' })
+      setForm({ name: '', email: '', company: '', message: '' })
     } catch {
       setStatus('error')
     }
@@ -779,6 +779,18 @@ function Contact() {
                 onChange={handleChange}
                 placeholder="your@email.com"
                 required
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <label className="block font-mono text-slate-400 text-xs mb-1.5">Company <span className="text-slate-600">(optional)</span></label>
+              <input
+                type="text"
+                name="company"
+                value={form.company}
+                onChange={handleChange}
+                placeholder="Your company or organization"
                 className={inputClass}
               />
             </div>
